@@ -3,6 +3,7 @@ package net.zhuoweizhang.raspberryjuice;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import javax.script.*;
 
 import org.bukkit.*;
 import org.bukkit.entity.*;
@@ -143,6 +144,8 @@ public class RemoteSession {
 			// get the world
 			World world = origin.getWorld();
 			
+
+
 			// world.getBlock
 			if (c.equals("world.getBlock")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
@@ -171,8 +174,22 @@ public class RemoteSession {
 				int blockType = Integer.parseInt(args[6]);
 				byte data = args.length > 7? Byte.parseByte(args[7]) : (byte) 0;
 				setCuboid(loc1, loc2, blockType, data);
-				
-			// world.getPlayerIds
+
+				// world.setSpawner
+			} else if (c.equals("world.setSpawner")) {
+				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
+				Block b = world.getBlockAt(loc);
+				b.setType(Material.MOB_SPAWNER);
+				int spawnerTypeId = (int) Integer.parseInt(args[3]);
+                plugin.getLogger().info("input:" + args[3]);
+                EntityType spawnerType = EntityType.fromId(spawnerTypeId);
+                plugin.getLogger().info(spawnerType.getName());
+				CreatureSpawner spawner = (CreatureSpawner) b.getState();
+				spawner.setSpawnedType(spawnerType);
+				spawner.update();
+
+
+				// world.getPlayerIds
 			} else if (c.equals("world.getPlayerIds")) {
 				StringBuilder bdr = new StringBuilder();
 				Collection<? extends Player> players = Bukkit.getOnlinePlayers();
@@ -496,6 +513,16 @@ public class RemoteSession {
 				Entity entity = world.spawnEntity(loc, EntityType.fromId(Integer.parseInt(args[3])));
 				send(entity.getEntityId());
 
+				// world.fireball
+			} else if (c.equals("world.fireball")) {
+				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
+				Fireball fireball = world.spawn(loc, Fireball.class);
+				if (args.length > 3) {
+					Vector direction = parseVector(args[3], args[4], args[5]);
+					fireball.setDirection(direction);
+				}
+				send(fireball.getEntityId());
+
 			// world.getEntityTypes
 			} else if (c.equals("world.getEntityTypes")) {
 				StringBuilder bdr = new StringBuilder();				
@@ -511,8 +538,19 @@ public class RemoteSession {
 
 			// not a command which is supported
 			} else {
-				plugin.getLogger().warning(c + " is not supported.");
-				send("Fail");
+				///
+				ScriptEngineManager factory = new ScriptEngineManager();
+				ScriptEngine engine = factory.getEngineByName("nashorn");
+				try {
+					engine.put("world", world);
+					engine.eval(c);
+				} catch (final ScriptException se) {
+					se.printStackTrace();
+					plugin.getLogger().warning(c + " is not supported.");
+					send("Fail");
+
+				}
+				///
 			}
 		} catch (Exception e) {
 			
@@ -601,6 +639,13 @@ public class RemoteSession {
 		int y = (int) Double.parseDouble(ystr);
 		int z = (int) Double.parseDouble(zstr);
 		return parseLocation(origin.getWorld(), x, y, z, origin.getBlockX(), origin.getBlockY(), origin.getBlockZ());
+	}
+
+	public Vector parseVector(String xstr, String ystr, String zstr) {
+		int x = (int) Double.parseDouble(xstr);
+		int y = (int) Double.parseDouble(ystr);
+		int z = (int) Double.parseDouble(zstr);
+		return new Vector(x, y, z);
 	}
 
 	public Location parseRelativeLocation(String xstr, String ystr, String zstr) {

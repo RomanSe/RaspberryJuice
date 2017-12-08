@@ -88,10 +88,10 @@ class CmdEntity(CmdPositioner):
     """Methods for entities"""
     def __init__(self, connection):
         CmdPositioner.__init__(self, connection, b"entity")
-    
+
     def getName(self, id):
         """Get the list name of the player with entity id => [name:str]
-        
+
         Also can be used to find name of entity if entity is not a player."""
         return self.conn.sendReceive(b"entity.getName", id)
 
@@ -197,9 +197,13 @@ class Minecraft:
         """Set a cuboid of blocks (x0,y0,z0,x1,y1,z1,id,[data])"""
         self.conn.send(b"world.setBlocks", intFloor(args))
 
+    def setSpawner(self, *args):
+        """Set spawner (x,y,z,creatureId)"""
+        self.conn.send(b"world.setSpawner", intFloor(args))
+
     def setSign(self, *args):
         """Set a sign (x,y,z,id,data,[line1,line2,line3,line4])
-        
+
         Wall signs (id=68) require data for facing direction 2=north, 3=south, 4=west, 5=east
         Standing signs (id=63) require data for facing rotation (0-15) 0=south, 4=west, 8=north, 12=east
         @author: Tim Cummings https://www.triptera.com.au/wordpress/"""
@@ -214,6 +218,10 @@ class Minecraft:
     def spawnEntity(self, *args):
         """Spawn entity (x,y,z,id,[data])"""
         return int(self.conn.sendReceive(b"world.spawnEntity", intFloor(args)))
+
+    def fireball(self, *args):
+        """Spawn entity (x,y,z, [direction])"""
+        return int(self.conn.sendReceive(b"world.fireball", args))
 
     def getHeight(self, *args):
         """Get the height of the world (x,z) => int"""
@@ -245,7 +253,7 @@ class Minecraft:
         self.conn.send(b"world.setting", setting, 1 if bool(status) else 0)
 
     def getEntityTypes(self):
-        """Return a list of Entity objects representing all the entity types in Minecraft"""  
+        """Return a list of Entity objects representing all the entity types in Minecraft"""
         s = self.conn.sendReceive(b"world.getEntityTypes")
         types = [t for t in s.split("|") if t]
         return [Entity(int(e[:e.find(",")]), e[e.find(",") + 1:]) for e in types]
