@@ -41,6 +41,8 @@ A Bukkit plugin which implements the Minecraft Pi Socket API.
  - spawnEntity(x,y,z,entity) - creates an entity and returns its entity id. see entity.py for list.
  - getEntityTypes - returns all the entities supported by the server.
  - entity.getName(id) - get a player name for entity id. Reverse of getPlayerId(playerName)
+ - fireball(x,y,z,dx,dy,dz) - send a fireball from location (x, y, z) in direction (dx, dy, dz)
+ - setSpawner(x,y,z,entity) - creates a spawner of entity in the location (x,y,z)
 
 Note - extra features are NOT guaranteed to be maintained in future releases, particularly if updates are made to the original Pi API which replace the functionality
 
